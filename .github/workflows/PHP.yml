@@ -1,0 +1,37 @@
+name: Test PHP
+
+on:
+  push:
+    paths:
+      - 'PHP/**'
+      - '.github/workflows/PHP.yml'
+  pull_request:
+    paths:
+      - 'PHP/**'
+      - '.github/workflows/PHP.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out the repo
+      uses: actions/checkout@v2
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: 7.3
+
+    - name: Set up dependencies
+      working-directory: PHP
+      run: composer install
+
+    - name: Test
+      working-directory: PHP
+      run: ./vendor/bin/phpunit
+
+    - name: Report using branch name (dynamic, use for a pair on each branch)
+      run: |
+        export GIT_BRANCH_NAME=$(git symbolic-ref --short HEAD)
+        export GIT_BRANCH_NAME=$( echo "$GIT_BRANCH_NAME" | sed 's/ /%20/g' )
+        curl -X GET ${{ secrets.PUSH_COUNTER_URL }}/record/$GIT_BRANCH_NAME?build=green

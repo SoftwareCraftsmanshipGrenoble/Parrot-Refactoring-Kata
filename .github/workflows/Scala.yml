@@ -1,0 +1,33 @@
+name: Test Scala
+
+on:
+  push:
+    paths:
+      - 'Scala/**'
+      - '.github/workflows/Scala.yml'
+  pull_request:
+    paths:
+      - 'Scala/**'
+      - '.github/workflows/Scala.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out the repo
+      uses: actions/checkout@v2
+
+    - name: Set up Java
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.8
+
+    - name: Build and test
+      working-directory: Scala
+      run: sbt clean test
+
+    - name: Report using branch name (dynamic, use for a pair on each branch)
+      run: |
+        export GIT_BRANCH_NAME=$(git symbolic-ref --short HEAD)
+        export GIT_BRANCH_NAME=$( echo "$GIT_BRANCH_NAME" | sed 's/ /%20/g' )
+        curl -X GET ${{ secrets.PUSH_COUNTER_URL }}/record/$GIT_BRANCH_NAME?build=green

@@ -1,0 +1,41 @@
+name: Test Kotlin
+
+on:
+  push:
+    paths:
+      - 'Kotlin/**'
+      - '.github/workflows/Kotlin.yml'
+  pull_request:
+    paths:
+      - 'Kotlin/**'
+      - '.github/workflows/Kotlin.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out the repo
+      uses: actions/checkout@v2
+
+    - name: Set up Java
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.8
+    - name: Cache gradle wrapper
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('Kotlin/**/*.gradle*', 'Kotlin/**/gradle-wrapper.properties') }}
+        restore-keys: ${{ runner.os }}-gradle
+
+    - name: Build and test
+      working-directory: Kotlin
+      run: ./gradlew clean test -i
+
+    - name: Report using branch name (dynamic, use for a pair on each branch)
+      run: |
+        export GIT_BRANCH_NAME=$(git symbolic-ref --short HEAD)
+        export GIT_BRANCH_NAME=$( echo "$GIT_BRANCH_NAME" | sed 's/ /%20/g' )
+        curl -X GET ${{ secrets.PUSH_COUNTER_URL }}/record/$GIT_BRANCH_NAME?build=green
